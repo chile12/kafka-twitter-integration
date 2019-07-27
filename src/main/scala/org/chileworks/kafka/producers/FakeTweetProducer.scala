@@ -1,19 +1,22 @@
 package org.chileworks.kafka.producers
 
+import java.util.Properties
 import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue}
 
 import org.chileworks.kafka.model.Tweet
 import org.apache.kafka.clients.producer.KafkaProducer
 
-class FakeTweetProducer(val id: String) extends KafkaProducer[Long, String](TwitterFeedProducer.configureProducer) with TwitterFeedProducer {
+class FakeTweetProducer(val id: String, properties: Properties) extends KafkaProducer[Long, String](properties) with TwitterFeedProducer {
 
   def fakeProduce(tweet: Tweet): Unit ={
-    queueHandle.add(gson.toJson(tweet))
+    queueHandle.add(tweet)
   }
 
-  override val queueHandle: BlockingQueue[String] = new LinkedBlockingQueue[String](TwitterFeedProducer.DEFAULTQUEUESIZE)
+  override val queueHandle: BlockingQueue[Tweet] = new LinkedBlockingQueue[Tweet](TwitterFeedProducer.DEFAULTQUEUESIZE)
 
   override def beforeRun(): Unit = Unit
 
-  override def afterRun(): Unit = Unit
+  override def afterRun(): Unit = this.close()
+
+  override val tweetProcessor: TweetProcessor = new TweetProcessor(queueHandle)
 }

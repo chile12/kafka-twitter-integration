@@ -1,22 +1,20 @@
 package org.chileworks.kafka.consumer
 
 import java.time.Duration
-import java.util
 import java.util.Properties
-import java.util.regex.Pattern
 
-import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
 import org.chileworks.kafka.model.{RichTweet, Tweet}
+import org.chileworks.kafka.util.EnrichmentConfig
 
 import scala.collection.mutable
 
-class DiffConsumer(properties: Properties, originalTopic: String, enrichedTopic: String) extends SimpleConsumer(new Properties()) {
+class DiffConsumer(val properties: Properties, originalTopic: String, enrichedTopic: String) extends TweetConsumer[Tweet] {
 
   // stores tweets with no matching enriched sibling between two polls
   private val danglingTweets = new mutable.HashMap[Long, Tweet]()
 
-  // subscribe to exactly those two topics
-  super.subscribe(util.Arrays.asList(originalTopic, enrichedTopic))
+  override val topics: List[String] = List(EnrichmentConfig.RAW_TOPIC, EnrichmentConfig.RICH_TOPIC)
+  override val maxQueueSize: Int = 1000000
 
   private def getDIff(prev: Tweet, next: Tweet): Option[String] ={  //TODO should be another object
     prev match {
@@ -27,9 +25,8 @@ class DiffConsumer(properties: Properties, originalTopic: String, enrichedTopic:
 
   }
 
-  //TODO should return an
   def pollDiffs(duration: Duration): Iterable[String] = {
-    val allTweets = pollTweets(duration).toList.groupBy(_.id)
+    val allTweets = collect(1000).toList.groupBy(_.id)
     allTweets.flatMap {
       case (id, prev :: next :: Nil) => getDIff(prev, next)
       case (id, single :: Nil) => {
@@ -42,16 +39,8 @@ class DiffConsumer(properties: Properties, originalTopic: String, enrichedTopic:
       }
       case _ => None
     }
+    Seq()
   }
 
-  // blunting all subscribe methods to prevent the subscription of other channels
-  override def subscribe(topics: util.Collection[String], listener: ConsumerRebalanceListener): Unit = Unit
-
-  override def subscribe(topics: util.Collection[String]): Unit = Unit
-
-  override def subscribe(pattern: Pattern, listener: ConsumerRebalanceListener): Unit = Unit
-
-  override def subscribe(pattern: Pattern): Unit = Unit
-
-  override def unsubscribe(): Unit = Unit
+  override def consumeTweet(topic: Long, tweet: Tweet): Tweet = tweet
 }

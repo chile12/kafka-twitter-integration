@@ -19,7 +19,7 @@ case class Tweet(
 
   def getDateTime: String = Tweet.toXmlDateTime(timestamp)
 
-  override def toString: String = Tweet.serialize(this, Tweet.typeOfSrc, null).getAsString
+  override def toString: String = Tweet.serialize(this, Tweet.typeOfSrc, null).toString
 }
 
 object Tweet extends JsonSerializer[Tweet]{
@@ -52,6 +52,7 @@ object Tweet extends JsonSerializer[Tweet]{
   override def serialize(src: Tweet, typeOfSrc: Type, context: JsonSerializationContext): JsonElement = {
 
     val t = new JsonObject
+    t.addProperty("typ", "tweet")
     t.addProperty("id", src.id)
     t.addProperty("text", src.text)
     t.addProperty("lang", src.lang)

@@ -7,11 +7,16 @@ import com.google.gson.{Gson, GsonBuilder, JsonParseException}
 import com.twitter.hbc.common.DelimitedStreamReader
 import com.twitter.hbc.core.Constants
 import com.twitter.hbc.core.processor.AbstractProcessor
-import org.chileworks.kafka.model.Tweet
+import org.chileworks.kafka.model.{Enrichment, RichTweet, Tweet, User}
 import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
 
+/**
+  * Will continuously process each line of an input stream and tries to create a Tweet out of each.
+  * User for parsing json tweets from dump or other sources.
+  * @param queue - the BlockingQueue to which each Tweet is saved
+  */
 class TweetProcessor(queue: BlockingQueue[Tweet]) extends AbstractProcessor[Tweet](queue){
   private val logger = LoggerFactory.getLogger(classOf[TweetProcessor])
   private val MAX_ALLOWABLE_BUFFER_SIZE = 500000
@@ -20,6 +25,9 @@ class TweetProcessor(queue: BlockingQueue[Tweet]) extends AbstractProcessor[Twee
   private val gson: Gson = TweetProcessor.getTweetGson
   private var reader: DelimitedStreamReader = _
 
+  /**
+    * create a new Tweet based on the next line of the stream
+    */
   override def processNextMessage(): Tweet = {
     var delimitedCount = -1
     var retries = 0
@@ -59,6 +67,8 @@ class TweetProcessor(queue: BlockingQueue[Tweet]) extends AbstractProcessor[Twee
 object TweetProcessor{
   def getTweetGson: Gson = new GsonBuilder()
     .registerTypeAdapter(classOf[Tweet], Tweet)
-    .setPrettyPrinting()
+    .registerTypeAdapter(classOf[RichTweet], RichTweet)
+    .registerTypeAdapter(classOf[User], User)
+    .registerTypeAdapter(classOf[Enrichment], Enrichment)
     .create
 }

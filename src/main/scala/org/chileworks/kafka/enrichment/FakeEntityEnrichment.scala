@@ -12,7 +12,7 @@ class FakeEntityEnrichment(
 
   override val properties: Properties = EntityEnrichment.configureStream
 
-  override def transformTweet(tweet: Tweet): Tweet = {
+  override def enrichTweet(tweet: Tweet): RichTweet = {
     val sentiment = sentimentFunc(tweet)
     assert(sentiment >= 0 && sentiment <= 1)
     val enrichment = Enrichment(additional, sentiment)

@@ -17,6 +17,9 @@ case class SpotlightWrapper(
    resources: Seq[SpotlightAnnotation]
  )
 
+/**
+  * The wrapper object returned from Spotlight containing annotations.
+  */
 object SpotlightWrapper extends JsonDeserializer[SpotlightWrapper]{
   implicit val typeOfSrc: Type = new TypeToken[SpotlightWrapper](){}.getType
 

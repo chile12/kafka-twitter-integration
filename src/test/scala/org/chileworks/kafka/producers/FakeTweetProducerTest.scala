@@ -80,7 +80,7 @@ class FakeTweetProducerTest extends FunSuite {
         // here we test if the consumed tweets are all in the list of tweets we just send
         assert(tweets.nonEmpty)
         assert(tweets.groupBy(_.id).forall(pair =>{
-          pair._2.size == 2 && pair._2.last.text.diff(pair._2.head.text).trim == appendage //TODO
+          pair._2.size == 2 && pair._2.forall(t => t.entitiesObj.nonEmpty)
         }))
         tweets
       case Failure(f) =>

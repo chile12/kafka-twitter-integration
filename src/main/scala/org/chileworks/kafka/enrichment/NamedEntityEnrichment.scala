@@ -42,7 +42,7 @@ class NamedEntityEnrichment(val properties: Properties, override val rawTopic: S
       case Success(body) =>
         val wrapper = gson.fromJson(body, classOf[SpotlightWrapper])
         spotlightAnnotationsToEnrichment(wrapper)
-      case Failure(f) => throw f  //TODO
+      case Failure(f) => throw f
     }
   }
 

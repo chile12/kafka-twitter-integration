@@ -5,6 +5,10 @@ import java.lang.reflect.Type
 import com.google.gson.reflect.TypeToken
 import com.google.gson.{JsonDeserializationContext, JsonDeserializer, JsonElement}
 
+
+/**
+  * A Spotlight annotation.
+  */
 case class SpotlightAnnotation(
  uri: String,
  support: Int,

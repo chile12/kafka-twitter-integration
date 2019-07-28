@@ -31,8 +31,8 @@ object EntitiesObj extends JsonSerializer[EntitiesObj] with JsonDeserializer[Ent
   override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): EntitiesObj = {
     val obj = json.getAsJsonObject
     EntitiesObj(
-      obj.getAsJsonArray("hashtags").iterator().asScala.map(je => context.deserialize(je, Hashtag.typeOfSrc)).toSeq,
-      obj.getAsJsonArray("urls").iterator().asScala.map(je => context.deserialize(je, UrlObj.typeOfSrc)).toSeq
+      obj.getAsJsonArray("hashtags").iterator().asScala.map(je => context.deserialize(je, Hashtag.typeOfSrc).asInstanceOf[Hashtag]).toSeq,
+      obj.getAsJsonArray("urls").iterator().asScala.map(je => context.deserialize(je, UrlObj.typeOfSrc).asInstanceOf[UrlObj]).toSeq
     )
   }
 }

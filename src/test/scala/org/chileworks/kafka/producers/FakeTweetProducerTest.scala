@@ -5,7 +5,7 @@ import org.chileworks.kafka.consumer.{SimpleConsumer, TweetConsumer}
 import org.chileworks.kafka.enrichment.FakeEntityEnrichment
 import org.chileworks.kafka.model
 import org.chileworks.kafka.model.Tweet
-import org.chileworks.kafka.util.EnrichmentConfig
+import org.chileworks.kafka.util.{EnrichmentConfig, KafkaConfig}
 import org.scalatest.FunSuite
 
 import scala.concurrent.Await
@@ -19,7 +19,7 @@ class FakeTweetProducerTest extends FunSuite {
 
   test("round-trip fake tweets"){
 
-    val fakeProducer = new FakeTweetProducer("fake", TwitterFeedProducer.configureProducer)
+    val fakeProducer = new FakeTweetProducer("fake", KafkaConfig.TOPICS.split(",").toList.map(_.trim), TwitterFeedProducer.configureProducer)
     val fakeConsumer = new SimpleConsumer(TweetConsumer.configureConsumer("simpler_consumer"))
 
     val fakeTweets = Seq(
@@ -51,8 +51,8 @@ class FakeTweetProducerTest extends FunSuite {
 
   test("round-trip with fake enrichment"){
 
-    val fakeProducer = new FakeTweetProducer("fake", TwitterFeedProducer.configureProducer)
-    val fakeConsumer = new SimpleConsumer(TweetConsumer.configureConsumer("simple_consumer"), List(EnrichmentConfig.RAW_TOPIC, EnrichmentConfig.RICH_TOPIC))
+    val fakeProducer = new FakeTweetProducer("fake", KafkaConfig.TOPICS.split(",").toList.map(_.trim), TwitterFeedProducer.configureProducer)
+    val fakeConsumer = new SimpleConsumer(TweetConsumer.configureConsumer("simpler_consumer"), List(EnrichmentConfig.RAW_TOPIC, EnrichmentConfig.RICH_TOPIC))
 
     val appendage = "___TEST___"
 

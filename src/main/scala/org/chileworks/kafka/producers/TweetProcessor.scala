@@ -67,9 +67,7 @@ class TweetProcessor(queue: BlockingQueue[Tweet]) extends AbstractProcessor[Twee
 object TweetProcessor{
   def getTweetGson: Gson = new GsonBuilder()
     .registerTypeAdapter(classOf[Tweet], Tweet)
-    .registerTypeAdapter(classOf[RichTweet], RichTweet)
     .registerTypeAdapter(classOf[User], User)
-    .registerTypeAdapter(classOf[Enrichment], Enrichment)
     .registerTypeAdapter(classOf[SpotlightWrapper], SpotlightWrapper)
     .registerTypeAdapter(classOf[SpotlightAnnotation], SpotlightAnnotation)
     .registerTypeAdapter(classOf[EntitiesObj], EntitiesObj)

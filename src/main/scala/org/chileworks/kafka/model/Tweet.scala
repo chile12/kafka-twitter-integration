@@ -25,6 +25,9 @@ case class Tweet(
 
 object Tweet extends JsonSerializer[Tweet] with JsonDeserializer[Tweet]{
 
+  def apply(tweet: Tweet, entObj: EntitiesObj): Tweet =
+    Tweet(tweet.id, tweet.text, tweet.lang, tweet.user, tweet.retweetCount, tweet.favoriteCount, tweet.timestamp, Some(entObj))
+
   implicit val typeOfSrc: Type = new TypeToken[Tweet](){}.getType
 
   private def pad(sb: StringBuilder, x: Int): Unit = {
@@ -75,7 +78,7 @@ object Tweet extends JsonSerializer[Tweet] with JsonDeserializer[Tweet]{
       obj.get("retweet_count").getAsInt,
       obj.get("favorite_count").getAsInt,
       obj.get("timestamp_ms").getAsLong,
-      Option(obj.get("entities")).map(o => context.deserialize(o.getAsJsonObject, EntitiesObj.typeOfSrc))
+      Option(obj.get("entities")).map(o => context.deserialize(o.getAsJsonObject, EntitiesObj.typeOfSrc).asInstanceOf[EntitiesObj])
     )
   }
 }

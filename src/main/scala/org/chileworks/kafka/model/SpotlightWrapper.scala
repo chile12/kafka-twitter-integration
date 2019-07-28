@@ -29,9 +29,9 @@ object SpotlightWrapper extends JsonDeserializer[SpotlightWrapper]{
       obj.get("@types").getAsString.split(",").map(_.trim),
       obj.get("@sparql").getAsString,
       obj.get("@policy").getAsString,
-      obj.getAsJsonArray("Resources").iterator().asScala.toSeq.map(o =>{
+      Option(obj.getAsJsonArray("Resources")).map(_.iterator().asScala.toSeq.map(o =>{
         SpotlightAnnotation.deserialize(o, SpotlightAnnotation.typeOfSrc, context)
-      })
+      })).getOrElse(Seq())
     )
   }
 }

@@ -43,7 +43,7 @@ trait TwitterFeedProducer extends KafkaProducer[Long, String] {
   /**
     * The Kafka topics to which all tweets are published.
     */
-  val topics: List[String] = KafkaConfig.TOPICS.split(",").toList.map(_.trim)
+  val topics: List[String]
 
   /**
     * Indicates whether or not to allow the ingestion of new Tweets from the source.

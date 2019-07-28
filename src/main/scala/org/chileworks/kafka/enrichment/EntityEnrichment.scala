@@ -6,7 +6,7 @@ import java.util.Properties
 import com.google.gson.Gson
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.{KafkaStreams, StreamsBuilder, StreamsConfig}
-import org.chileworks.kafka.model.{RichTweet, Tweet}
+import org.chileworks.kafka.model.Tweet
 import org.chileworks.kafka.producers.TweetProcessor
 import org.chileworks.kafka.util.{EnrichmentConfig, KafkaConfig}
 
@@ -15,7 +15,7 @@ import org.chileworks.kafka.util.{EnrichmentConfig, KafkaConfig}
   * the implemented [[enrichTweet(tweet: Tweet)]] function and returns it back to Kafka on a different topic.
   *
   * The base enrichment behaviour implemented as a Kafka stream app:
-  * consuming objects of [[Tweet]] and producing objects of [[org.chileworks.kafka.model.RichTweet]]
+  * consuming objects of [[Tweet]] and including [[EntityObj]] es enrichment
   */
 trait EntityEnrichment {
 
@@ -26,26 +26,36 @@ trait EntityEnrichment {
   private var streams: KafkaStreams = _
 
   /**
-    * Will create an instance of [[RichTweet]] based on the input [[Tweet]].
+    * Will create an instance of [[Tweet]] based on the input [[Tweet]].
     * @param tweet - the input Tweet
     * @return - the enriched Tweet
     */
-  def enrichTweet(tweet: Tweet): RichTweet
+  def enrichTweet(tweet: Tweet): Tweet
+
+  /**
+    * The Kafka topic to which a Twitter feed has been directly forwarded
+    */
+  val rawTopic: String = EnrichmentConfig.RAW_TOPIC
+
+  /**
+    * The Kafka Topic into which the enriched tweets are fed
+    */
+  val richTopic: String = EnrichmentConfig.RICH_TOPIC
 
   /**
     * Will start the enrichment app. No enrichment is performed before the first call to this method.
     */
   def stream(): Unit ={
     val builder = new StreamsBuilder()
-    builder.stream[String, String](EnrichmentConfig.RAW_TOPIC).mapValues{value =>
+    builder.stream[String, String](rawTopic).mapValues{value =>
       if(value.startsWith("{")) {
-        val tweet = gson.fromJson(value, RichTweet.determineTweetClass(value))
+        val tweet: Tweet = gson.fromJson(value, Tweet.typeOfSrc)
         val enriched = enrichTweet(tweet)
         gson.toJson(enriched)
       }
       else
         value
-    }.to(EnrichmentConfig.RICH_TOPIC)
+    }.to(richTopic)
 
     streams = new KafkaStreams(builder.build, properties)
     streams.start()

@@ -23,7 +23,7 @@ object TweetGeneratorUtil {
   private val reTweetFactor = 10000L
   private val likeFactor = 100000L
   private val userIdFactor = 10000000L
-  private val defaultCollectionSize = 100
+  private val defaultCollectionSize = 1000
 
   private def random(factor: Long): Long = (Random.nextDouble() * factor).toLong
 
@@ -37,7 +37,7 @@ object TweetGeneratorUtil {
     var runningFor = time.Duration.ofMillis(0L)
     // let's give kafka some time
     Thread.sleep(100)
-    while (tweets.isEmpty) {
+    while (tweets.isEmpty || runningFor.compareTo(duration) >= 0 ) {
       tweets = consumer.collect(defaultCollectionSize)
       runningFor = time.Duration.ofMillis(new Date().getTime - start)
     }

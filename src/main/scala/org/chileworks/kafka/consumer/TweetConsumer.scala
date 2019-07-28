@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.google.gson.Gson
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.{KafkaStreams, StreamsBuilder, StreamsConfig}
-import org.chileworks.kafka.model.{RichTweet, Tweet}
+import org.chileworks.kafka.model.Tweet
 import org.chileworks.kafka.producers.TweetProcessor
 import org.chileworks.kafka.util.{EnrichmentConfig, KafkaConfig}
 import org.slf4j.LoggerFactory
@@ -65,7 +65,7 @@ trait TweetConsumer[T] {
     val builder = new StreamsBuilder()
     builder.stream[Long, String](topics.asJava).foreach { (id: Long, value: String) =>
       if (value.startsWith("{")) {
-        val tweet = gson.fromJson(value, RichTweet.determineTweetClass(value))
+        val tweet: Tweet = gson.fromJson(value, Tweet.typeOfSrc)
         addToQueue(id, tweet)
       }
     }

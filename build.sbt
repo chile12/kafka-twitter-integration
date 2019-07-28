@@ -14,6 +14,7 @@ lazy val commonSettings= Seq(
   libraryDependencies += "com.twitter" % "hbc-core" % "2.2.0",
   libraryDependencies += "com.google.code.gson" % "gson" % "2.8.5",
   libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.9",
+  libraryDependencies += "org.scalaj" %% "scalaj-http" % "2.4.2",
 
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"),
   test := {},

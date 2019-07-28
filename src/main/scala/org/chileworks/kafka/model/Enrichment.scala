@@ -7,7 +7,7 @@ import com.google.gson._
 
 import scala.collection.JavaConverters._
 
-case class Enrichment(entities: Map[Int, String], sentiment: Float)  // TODO switch from String to other object
+case class Enrichment(entities: Map[Int, UrlObj], sentiment: Float)
 
 object Enrichment extends JsonSerializer[Enrichment] with JsonDeserializer[Enrichment]{
 
@@ -15,7 +15,8 @@ object Enrichment extends JsonSerializer[Enrichment] with JsonDeserializer[Enric
 
   override def serialize(src: Enrichment, typeOfSrc: Type, context: JsonSerializationContext): JsonElement = {
     val map = new JsonObject
-    src.entities.foreach(kv => map.addProperty(String.valueOf(kv._1), kv._2))
+    src.entities.foreach(kv => map.add(String.valueOf(kv._1),
+      UrlObj.serialize(kv._2, UrlObj.typeOfSrc, context)))
     val e = new JsonObject
     e.add("entities", map)
     e.addProperty("sentiment", src.sentiment)
@@ -26,7 +27,7 @@ object Enrichment extends JsonSerializer[Enrichment] with JsonDeserializer[Enric
     val obj = json.getAsJsonObject
     val map = obj.getAsJsonObject("entities")
     new Enrichment(
-      map.entrySet().asScala.map(kv => kv.getKey.toInt -> kv.getValue.getAsString).toMap,
+      map.entrySet().asScala.map(kv => kv.getKey.toInt -> UrlObj.deserialize(kv.getValue, UrlObj.typeOfSrc, context)).toMap,
       obj.get("sentiment").getAsFloat
     )
   }

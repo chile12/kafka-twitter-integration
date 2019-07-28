@@ -3,7 +3,7 @@ package org.chileworks.kafka.model
 import java.lang.reflect.Type
 import java.util.{Calendar, GregorianCalendar}
 
-import com.google.gson.{JsonElement, JsonObject, JsonSerializationContext, JsonSerializer}
+import com.google.gson._
 import com.google.gson.reflect.TypeToken
 
 case class Tweet(
@@ -13,7 +13,8 @@ case class Tweet(
   user: User,
   retweetCount: Int,
   favoriteCount: Int,
-  timestamp: Long
+  timestamp: Long,
+  entitiesObj: Option[EntitiesObj] = None
 ){
   assert(text.trim.length <= 280, "Tweets may only contain up to 280 characters.")
 
@@ -22,7 +23,7 @@ case class Tweet(
   override def toString: String = Tweet.serialize(this, Tweet.typeOfSrc, null).toString
 }
 
-object Tweet extends JsonSerializer[Tweet]{
+object Tweet extends JsonSerializer[Tweet] with JsonDeserializer[Tweet]{
 
   implicit val typeOfSrc: Type = new TypeToken[Tweet](){}.getType
 
@@ -60,6 +61,21 @@ object Tweet extends JsonSerializer[Tweet]{
     t.addProperty("retweet_count", src.retweetCount)
     t.addProperty("timestamp_ms", src.timestamp)
     t.addProperty("favorite_count", src.favoriteCount)
+    if(src.entitiesObj.nonEmpty) t.add("entities", context.serialize(src.entitiesObj.get))
     t
+  }
+
+  override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Tweet = {
+    val obj = json.getAsJsonObject
+    Tweet(
+      obj.get("id").getAsLong,
+      obj.get("text").getAsString,
+      obj.get("lang").getAsString,
+      context.deserialize(obj.getAsJsonObject("user"), User.typeOfSrc),
+      obj.get("retweet_count").getAsInt,
+      obj.get("favorite_count").getAsInt,
+      obj.get("timestamp_ms").getAsLong,
+      Option(obj.get("entities")).map(o => context.deserialize(o.getAsJsonObject, EntitiesObj.typeOfSrc))
+    )
   }
 }

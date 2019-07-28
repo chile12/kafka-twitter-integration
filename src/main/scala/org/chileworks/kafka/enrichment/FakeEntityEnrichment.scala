@@ -2,12 +2,12 @@ package org.chileworks.kafka.enrichment
 
 import java.util.Properties
 
-import org.chileworks.kafka.model.{Enrichment, RichTweet, Tweet}
+import org.chileworks.kafka.model.{Enrichment, RichTweet, Tweet, UrlObj}
 
 class FakeEntityEnrichment(
     appendWith: String,
     sentimentFunc: Tweet => Float,
-    additional: Map[Int, String] = Map()
+    additional: Map[Int, UrlObj] = Map()
   ) extends EntityEnrichment {
 
   override val properties: Properties = EntityEnrichment.configureStream

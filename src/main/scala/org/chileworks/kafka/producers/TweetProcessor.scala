@@ -7,7 +7,7 @@ import com.google.gson.{Gson, GsonBuilder, JsonParseException}
 import com.twitter.hbc.common.DelimitedStreamReader
 import com.twitter.hbc.core.Constants
 import com.twitter.hbc.core.processor.AbstractProcessor
-import org.chileworks.kafka.model.{Enrichment, RichTweet, Tweet, User}
+import org.chileworks.kafka.model._
 import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
@@ -70,5 +70,10 @@ object TweetProcessor{
     .registerTypeAdapter(classOf[RichTweet], RichTweet)
     .registerTypeAdapter(classOf[User], User)
     .registerTypeAdapter(classOf[Enrichment], Enrichment)
+    .registerTypeAdapter(classOf[SpotlightWrapper], SpotlightWrapper)
+    .registerTypeAdapter(classOf[SpotlightAnnotation], SpotlightAnnotation)
+    .registerTypeAdapter(classOf[EntitiesObj], EntitiesObj)
+    .registerTypeAdapter(classOf[Hashtag], Hashtag)
+    .registerTypeAdapter(classOf[UrlObj], UrlObj)
     .create
 }

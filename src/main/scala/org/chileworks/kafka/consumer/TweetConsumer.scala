@@ -49,8 +49,8 @@ trait TweetConsumer[T] {
 
   private val streams: KafkaStreams = new KafkaStreams(createStream, properties)
 
-  private def addToQUeue(id: Long, t: Tweet): Unit ={
-    val t = consumeTweet(id, t)
+  private def addToQueue(id: Long, tweet: Tweet): Unit ={
+    val t = consumeTweet(id, tweet)
     val size = queueSize.incrementAndGet()
     if(size >= maxQueueSize){
       queueOverflowBehaviour(queue, t)
@@ -66,7 +66,7 @@ trait TweetConsumer[T] {
     builder.stream[Long, String](topics.asJava).foreach { (id: Long, value: String) =>
       if (value.startsWith("{")) {
         val tweet = gson.fromJson(value, RichTweet.determineTweetClass(value))
-        addToQUeue(id, tweet)
+        addToQueue(id, tweet)
       }
     }
     builder.build

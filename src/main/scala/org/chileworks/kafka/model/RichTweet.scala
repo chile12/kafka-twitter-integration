@@ -49,15 +49,7 @@ object RichTweet extends JsonSerializer[RichTweet] with JsonDeserializer[RichTwe
 
   override def deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): RichTweet = {
     val obj = json.getAsJsonObject
-    new RichTweet(
-      obj.get("id").getAsLong,
-      obj.get("text").getAsString,
-      obj.get("lang").getAsString,
-      context.deserialize(obj.getAsJsonObject("user"), User.typeOfSrc),
-      obj.get("retweet_count").getAsInt,
-      obj.get("favorite_count").getAsInt,
-      obj.get("timestamp_ms").getAsLong,
-      context.deserialize(obj.getAsJsonObject("enrichment"), Enrichment.typeOfSrc)
-    )
+    val t = Tweet.deserialize(json, Tweet.typeOfSrc, context)
+    RichTweet(t, context.deserialize(obj.getAsJsonObject("enrichment"), Enrichment.typeOfSrc))
   }
 }

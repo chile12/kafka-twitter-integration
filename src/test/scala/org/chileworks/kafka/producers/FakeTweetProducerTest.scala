@@ -1,65 +1,36 @@
 package org.chileworks.kafka.producers
 
-import java.time
-import java.util.Date
-import java.util.concurrent.TimeUnit
-
+import org.chileworks.kafka.TweetGeneratorUtil._
 import org.chileworks.kafka.consumer.{SimpleConsumer, TweetConsumer}
 import org.chileworks.kafka.enrichment.FakeEntityEnrichment
-import org.chileworks.kafka.model.{Tweet, User}
+import org.chileworks.kafka.model
+import org.chileworks.kafka.model.Tweet
 import org.chileworks.kafka.util.EnrichmentConfig
 import org.scalatest.FunSuite
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Random, Success}
 
 class FakeTweetProducerTest extends FunSuite {
 
-  private val defaultWaitTime = Duration.create(10d, TimeUnit.SECONDS)
-  private val longWaitTime = Duration.create(20d, TimeUnit.SECONDS)
-  private val consumeTime = time.Duration.ofSeconds(10L)
-  private val idFactor = 1000000000000000000L
-  private val followerFactor = 1000000L
-  private val reTweetFactor = 10000L
-  private val likeFactor = 100000L
-  private val userIdFactor = 10000000L
-  private val defaultCollectionSize = 100
+  private val fakeUser1 = createUser("Markus Freude", "Chile", "Leeptsch")
+  private val fakeUser2 = createUser("Jan Vorberger", "HolyCrab", "Leeptsch")
 
-  private def random(factor: Long): Long = (Random.nextDouble() * factor).toLong
-
-  val fakeUser1 = User(random(userIdFactor), "Markus Freude", "Chile", "Leeptsch", random(followerFactor).toInt)
-  val fakeUser2 = User(random(userIdFactor), "Jan Vorberger", "HolyCrab", "Leeptsch", random(followerFactor).toInt)
-
-  private def collectTweets(consumer: SimpleConsumer, duration: time.Duration): Future[Iterable[Tweet]] = Future{
-    val start = new Date().getTime
-    var tweets: Iterable[Tweet] = Iterable.empty
-    var runningFor = time.Duration.ofMillis(0L)
-    // let's give kafka some time
-    Thread.sleep(100)
-    while (tweets.isEmpty) {
-      tweets = consumer.collect(defaultCollectionSize)
-      runningFor = time.Duration.ofMillis(new Date().getTime - start)
-    }
-    tweets.toList
-  }
-
-  ignore("round-trip fake tweets"){
+  test("round-trip fake tweets"){
 
     val fakeProducer = new FakeTweetProducer("fake", TwitterFeedProducer.configureProducer)
     val fakeConsumer = new SimpleConsumer(TweetConsumer.configureConsumer("simpler_consumer"))
 
-    val now = new Date().getTime
     val fakeTweets = Seq(
-      Tweet(random(idFactor), "@Chile you can't code, man!", "en", fakeUser2, random(reTweetFactor).toInt, random(likeFactor).toInt, now),
-      Tweet(random(idFactor), "Al least I don't suck! @HolyCrab", "en", fakeUser1, random(reTweetFactor).toInt, random(likeFactor).toInt, now),
-      Tweet(random(idFactor), "In your dreams...", "en", fakeUser1, random(reTweetFactor).toInt, random(likeFactor).toInt, now)
+      createTweet(fakeUser2, "@Chile you can't code, man!", "en"),
+      createTweet(fakeUser1, "Al least I don't suck! @HolyCrab", "en"),
+      createTweet(fakeUser2, "In your dreams...", "en")
     )
     // start the twitter orchestration worker
     val produceFuture = fakeProducer.orchestrate()
     // queue fake tweets
-    fakeTweets.foreach(fakeProducer.fakeProduce)
+    fakeTweets.foreach(fakeProducer.publishTweet)
     // wait for the tweets to be processes
     TwitterFeedProducer.waitFor(defaultWaitTime)
     val consumeFuture = collectTweets(fakeConsumer, consumeTime).andThen{
@@ -85,24 +56,21 @@ class FakeTweetProducerTest extends FunSuite {
 
     val appendage = "___TEST___"
 
-    val now = new Date().getTime
     val fakeTweets = Seq(
-      Tweet(random(idFactor), "Oi, this is kinda easy.", "en", fakeUser2, random(reTweetFactor).toInt, random(likeFactor).toInt, now),
-      Tweet(random(idFactor), "Meh", "en", fakeUser1, random(reTweetFactor).toInt, random(likeFactor).toInt, now)
+      createTweet(fakeUser2, "Oi, this is kinda easy.", "en"),
+      createTweet(fakeUser1, "Meh", "en")
     )
 
     // creating a fake enrichment factory: sentiment is random, and some pointless text pointers
     val stream = new FakeEntityEnrichment(appendage, (_: Tweet) => Random.nextFloat(), Map(
-      23 -> "skjgfdsjk",
-      34 -> "hdsfsf",
-      104 -> "hfdjsgvhr"
+      23 -> model.UrlObj("https://en.wikipedia.org/wiki/Hamburg", "https://en.wikipedia.org/wiki/Hamburg", "Hamburg", (23, 30))
     ))
     stream.stream()
 
     // start the twitter orchestration worker
     val produceFuture = fakeProducer.orchestrate()
     // queue fake tweets
-    fakeTweets.foreach(fakeProducer.fakeProduce)
+    fakeTweets.foreach(fakeProducer.publishTweet)
     // wait for the tweets to be processes
     TwitterFeedProducer.waitFor(defaultWaitTime)
     val consumeFuture = collectTweets(fakeConsumer, consumeTime).andThen{
@@ -118,7 +86,6 @@ class FakeTweetProducerTest extends FunSuite {
     }
     val res = Await.result(consumeFuture, longWaitTime)
     assert(res.size == fakeTweets.size*2)
-    assert(fakeConsumer.queue.isEmpty)
     // tell the worker that it is time to stop listening for new tweets
     fakeProducer.toggleListening()
     // wait for that to sink in and exit

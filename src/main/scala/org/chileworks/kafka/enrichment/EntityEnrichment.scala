@@ -39,7 +39,7 @@ trait EntityEnrichment {
     val builder = new StreamsBuilder()
     builder.stream[String, String](EnrichmentConfig.RAW_TOPIC).mapValues{value =>
       if(value.startsWith("{")) {
-        val tweet = gson.fromJson(value, classOf[Tweet])
+        val tweet = gson.fromJson(value, RichTweet.determineTweetClass(value))
         val enriched = enrichTweet(tweet)
         gson.toJson(enriched)
       }

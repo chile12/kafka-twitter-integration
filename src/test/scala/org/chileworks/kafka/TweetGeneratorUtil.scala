@@ -4,7 +4,7 @@ import java.time
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
-import org.chileworks.kafka.consumer.SimpleConsumer
+import org.chileworks.kafka.consumer.TweetConsumer
 import org.chileworks.kafka.model.{Tweet, User}
 
 import scala.concurrent.Future
@@ -31,9 +31,9 @@ object TweetGeneratorUtil {
 
   def createTweet(user: User, text: String, lang: String): Tweet = Tweet(random(idFactor), text, lang, user, random(reTweetFactor).toInt, random(likeFactor).toInt, new Date().getTime)
 
-  def collectTweets(consumer: SimpleConsumer, duration: time.Duration): Future[Iterable[Tweet]] = Future{
+  def collectTweets[T](consumer: TweetConsumer[T], duration: time.Duration): Future[Iterable[T]] = Future{
     val start = new Date().getTime
-    var tweets: Iterable[Tweet] = Iterable.empty
+    var tweets: Iterable[T] = Iterable.empty
     var runningFor = time.Duration.ofMillis(0L)
     // let's give kafka some time
     Thread.sleep(100)

@@ -9,7 +9,7 @@ class FakeEntityEnrichment(
     appendWith: String,
     sentimentFunc: Tweet => Float,
     additional: Map[Int, UrlObj] = Map()
-  ) extends EntityEnrichment {
+  ) extends EntityEnrichment[Tweet] {
 
   override val properties: Properties = EntityEnrichment.configureStream
 

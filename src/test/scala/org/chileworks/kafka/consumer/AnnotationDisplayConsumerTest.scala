@@ -1,8 +1,7 @@
-package org.chileworks.kafka.enrichment
+package org.chileworks.kafka.consumer
 
 import org.chileworks.kafka.TweetGeneratorUtil._
-import org.chileworks.kafka.consumer.{SimpleConsumer, TweetConsumer}
-import org.chileworks.kafka.model.Tweet
+import org.chileworks.kafka.enrichment.{EntityEnrichment, NamedEntityEnrichment}
 import org.chileworks.kafka.producers.{FakeTweetProducer, TwitterFeedProducer}
 import org.chileworks.kafka.util.{EnrichmentConfig, KafkaConfig}
 import org.scalatest.{FunSuite, MustMatchers}
@@ -11,15 +10,15 @@ import scala.concurrent.Await
 import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class NamedEntityEnrichmentTest extends FunSuite with MustMatchers {
+class AnnotationDisplayConsumerTest extends FunSuite with MustMatchers {
 
   private val fakeUser1 = createUser("Markus Freude", "Chile", "Leeptsch")
   private val fakeUser2 = createUser("Jan Vorberger", "HolyCrab", "Leeptsch")
 
-  test("perform NER enrichment on given input tweets"){
+  test("consume given tweets and produce an annotation-summary"){
 
-    val fakeProducer = new FakeTweetProducer("fake", KafkaConfig.TOPICS.split(",").toList.map(_.trim), TwitterFeedProducer.configureProducer)
-    val fakeConsumer = new SimpleConsumer(TweetConsumer.configureConsumer("simpler_consumer"), List(EnrichmentConfig.RICH_TOPIC))
+    val fakeProducer = new FakeTweetProducer("fake", List(EnrichmentConfig.RAW_TOPIC), TwitterFeedProducer.configureProducer)
+    val fakeConsumer = new AnnotationDisplayConsumer(TweetConsumer.configureConsumer("annotation_display_consumer"), EnrichmentConfig.RICH_TOPIC)
     fakeConsumer.start()
 
     val fakeTweets = Seq(
@@ -40,42 +39,17 @@ class NamedEntityEnrichmentTest extends FunSuite with MustMatchers {
     TwitterFeedProducer.waitFor(defaultWaitTime)
     val consumeFuture = collectTweets(fakeConsumer, consumeTime).andThen{
       // here we test if the consumed tweets are all in the list of tweets we just send
-      case Success(tweets) =>
-        assert(tweets.nonEmpty)
-        tweets
+      case Success(text) => text
       case Failure(f) => throw new IllegalStateException("No tweets could be collected.", f)
     }
     val res = Await.result(consumeFuture, defaultWaitTime)
-
-    testForUrlAnnotation(res, fakeTweets.head, Seq(("https://en.wikipedia.org/wiki/Hamburg", "Hamburg", (0,7))))
-    testForUrlAnnotation(res, fakeTweets(1), Seq(
-      ("https://en.wikipedia.org/wiki/Port_of_Hamburg", "Hamburg harbour", (21, 36)),
-      ("https://en.wikipedia.org/wiki/Elbphilharmonie", "Elbphilharmonie", (62, 77))
-    ))
-    testForUrlAnnotation(res, fakeTweets(2), Seq(("https://en.wikipedia.org/wiki/Alster", "Alster", (56, 62))))
-
     // tell the worker that it is time to stop listening for new tweets
     fakeProducer.toggleListening()
     // wait for that to sink in and exit
     Await.ready(produceFuture, defaultWaitTime)
     fakeConsumer.close()
-    stream.close()
+
+    System.out.println(res.mkString("\n"))
   }
 
-  private def testForUrlAnnotation(res: Iterable[Tweet], original: Tweet, urls: Seq[(String, String, (Int, Int))]): Unit = {
-    res.find(t => t.id == original.id) match {
-      case Some(rt) => rt.entitiesObj match {
-        case Some(enrichment) =>
-          enrichment.urls.size mustBe urls.size
-          enrichment.urls.zip(urls).foreach[Unit]( tup =>{
-            val (url, expected) = tup
-            url.url mustBe expected._1
-            url.surfaceForm mustBe expected._2
-            url.indices mustBe expected._3
-          })
-        case None => fail()
-      }
-      case None => fail()
-    }
-  }
 }

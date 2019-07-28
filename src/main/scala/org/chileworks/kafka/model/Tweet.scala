@@ -6,6 +6,12 @@ import java.util.{Calendar, GregorianCalendar}
 import com.google.gson._
 import com.google.gson.reflect.TypeToken
 
+/**
+  * The tweet object as defined by twitter: https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/tweet-object
+  * All attributes and further twitter objects are also explained there
+  * NOTE: Minus attributes which are of no importance in this demo (ergo the enriched tweets will miss some attributes)
+  *
+  */
 case class Tweet(
   id: Long,
   text: String,
@@ -19,8 +25,6 @@ case class Tweet(
   assert(text.trim.length <= 280, "Tweets may only contain up to 280 characters.")
 
   def getDateTime: String = Tweet.toXmlDateTime(timestamp)
-
-  override def toString: String = Tweet.serialize(this, Tweet.typeOfSrc, null).toString
 }
 
 object Tweet extends JsonSerializer[Tweet] with JsonDeserializer[Tweet]{

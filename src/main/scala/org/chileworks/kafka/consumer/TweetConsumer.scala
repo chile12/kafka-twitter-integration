@@ -47,7 +47,7 @@ trait TweetConsumer[T] {
 
   val properties: Properties
 
-  private val streams: KafkaStreams = new KafkaStreams(createStream, properties)
+  private var streams: KafkaStreams = _
 
   private def addToQueue(id: Long, tweet: Tweet): Unit ={
     val t = consumeTweet(id, tweet)
@@ -60,7 +60,10 @@ trait TweetConsumer[T] {
     }
   }
 
-  private def createStream = {
+  /**
+    * Will create a new KafkaStreams object and start it.
+    */
+  def start(): Unit = {
     //// initialize stream collection
     val builder = new StreamsBuilder()
     builder.stream[Long, String](topics.asJava).foreach { (id: Long, value: String) =>
@@ -69,10 +72,12 @@ trait TweetConsumer[T] {
         addToQueue(id, tweet)
       }
     }
-    builder.build
+
+    streams = new KafkaStreams(builder.build, properties)
+
+    // start the streaming by default
+    streams.start()
   }
-  // start the streaming by default
-  streams.start()
 
   /**
     * Will be triggered when the Queue is about to overflow (exeeding the define [[maxQueueSize]]).

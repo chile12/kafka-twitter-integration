@@ -21,6 +21,7 @@ class FakeTweetProducerTest extends FunSuite {
 
     val fakeProducer = new FakeTweetProducer("fake", KafkaConfig.TOPICS.split(",").toList.map(_.trim), TwitterFeedProducer.configureProducer)
     val fakeConsumer = new SimpleConsumer(TweetConsumer.configureConsumer("simpler_consumer"))
+    fakeConsumer.start()
 
     val fakeTweets = Seq(
       createTweet(fakeUser2, "@Chile you can't code, man!", "en"),
@@ -53,6 +54,7 @@ class FakeTweetProducerTest extends FunSuite {
 
     val fakeProducer = new FakeTweetProducer("fake", KafkaConfig.TOPICS.split(",").toList.map(_.trim), TwitterFeedProducer.configureProducer)
     val fakeConsumer = new SimpleConsumer(TweetConsumer.configureConsumer("simpler_consumer"), List(EnrichmentConfig.RAW_TOPIC, EnrichmentConfig.RICH_TOPIC))
+    fakeConsumer.start()
 
     val appendage = "___TEST___"
 

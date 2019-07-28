@@ -17,7 +17,7 @@ import org.chileworks.kafka.util.{EnrichmentConfig, KafkaConfig}
   * The base enrichment behaviour implemented as a Kafka stream app:
   * consuming objects of [[Tweet]] and including [[EntityObj]] es enrichment
   */
-trait EntityEnrichment {
+trait EntityEnrichment[T] {
 
   val properties: Properties
 
@@ -26,11 +26,11 @@ trait EntityEnrichment {
   private var streams: KafkaStreams = _
 
   /**
-    * Will create an instance of [[Tweet]] based on the input [[Tweet]].
+    * Will create an instance of [[T]] based on the input [[Tweet]].
     * @param tweet - the input Tweet
-    * @return - the enriched Tweet
+    * @return - the enriched T
     */
-  def enrichTweet(tweet: Tweet): Tweet
+  def enrichTweet(tweet: Tweet): T
 
   /**
     * The Kafka topic to which a Twitter feed has been directly forwarded
